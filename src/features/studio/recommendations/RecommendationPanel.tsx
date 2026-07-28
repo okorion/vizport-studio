@@ -57,8 +57,10 @@ export function RecommendationPanel() {
                   <small><Info size={13} aria-hidden="true" /> {recommendation.caution}</small>
                 ) : null}
               </span>
-              <span className="score-badge">{recommendation.score}</span>
-              {selected ? <Check className="selected-check" size={16} aria-hidden="true" /> : null}
+              <span className="score-badge">
+                {recommendation.score}
+                {selected ? <Check size={12} aria-hidden="true" /> : null}
+              </span>
             </button>
           );
         })}

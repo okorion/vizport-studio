@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { FileUp, Play, RotateCcw } from "lucide-react";
+import { ChevronDown, FileUp, Play, RotateCcw } from "lucide-react";
 import type { VisualizationIntent } from "@/src/core/viz-spec/schema";
 import { useStudioStore } from "@/src/features/studio/studio.store";
 
@@ -80,18 +80,21 @@ export function DataInputPanel() {
       <label className="field-label" htmlFor="visualization-intent">
         보여주고 싶은 내용
       </label>
-      <select
-        id="visualization-intent"
-        className="select-input"
-        value={intent}
-        onChange={(event) => setIntent(event.target.value as VisualizationIntent)}
-      >
-        {INTENTS.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.label}
-          </option>
-        ))}
-      </select>
+      <div className="select-shell">
+        <select
+          id="visualization-intent"
+          className="select-input"
+          value={intent}
+          onChange={(event) => setIntent(event.target.value as VisualizationIntent)}
+        >
+          {INTENTS.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="select-chevron" size={15} aria-hidden="true" />
+      </div>
 
       {error ? <p className="notice notice-error">{error}</p> : null}
       {warnings.map((warning) => (

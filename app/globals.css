@@ -385,9 +385,23 @@ input:focus-visible {
 }
 
 .select-input {
+  appearance: none;
   height: 40px;
-  padding: 0 11px;
+  padding: 0 38px 0 11px;
   font-size: 12px;
+}
+
+.select-shell {
+  position: relative;
+}
+
+.select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  color: #687083;
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .field-help {
@@ -564,7 +578,13 @@ input:focus-visible {
 }
 
 .score-badge {
-  padding: 3px 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 26px;
+  min-height: 24px;
+  padding: 3px 6px;
   border-radius: 6px;
   color: #5f6680;
   background: #eef0f4;
@@ -578,11 +598,9 @@ input:focus-visible {
   background: #dfe7ff;
 }
 
-.selected-check {
-  position: absolute;
-  right: 9px;
-  bottom: 8px;
-  color: var(--primary);
+.score-badge svg {
+  flex: 0 0 auto;
+  stroke-width: 2.4;
 }
 
 .ai-refine-panel {
