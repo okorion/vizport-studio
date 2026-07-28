@@ -27,6 +27,7 @@ function sourceForSeries(spec: VizSpec): string {
   const bins = d3Bin().thresholds(Math.min(16, Math.max(5, Math.ceil(Math.sqrt(values.length)))))(values);
   const option: echarts.EChartsOption = {
     tooltip: { trigger: "axis" },
+    grid: { left: 24, right: 24, top: 64, bottom: 28, containLabel: true },
     xAxis: { type: "category", data: bins.map((bin) => \`${"${bin.x0}"}–${"${bin.x1}"}\`) },
     yAxis: { type: "value", name: "Count" },
     series: [{ type: "bar", data: bins.map((bin) => bin.length), barWidth: "92%" }],
@@ -45,7 +46,7 @@ function sourceForSeries(spec: VizSpec): string {
   return `const option: echarts.EChartsOption = {
     dataset: { source: data },
     tooltip: { trigger: "${spec.chartType === "scatter" ? "item" : "axis"}" },
-    grid: { left: 24, right: 24, top: 24, bottom: 28, containLabel: true },
+    grid: { left: 24, right: 24, top: 64, bottom: 28, containLabel: true },
     xAxis: { type: "${axisType}" },
     yAxis: { type: "value" },
     series: [{
@@ -84,10 +85,23 @@ export function VizPortChart({ data, height = 360 }: VizPortChartProps) {
       ...option,
     });
 
-    const observer = new ResizeObserver(() => chart.resize());
-    observer.observe(containerRef.current);
+    const container = containerRef.current;
+    let frame = 0;
+    let previousWidth = Math.round(container.clientWidth);
+    let previousHeight = Math.round(container.clientHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      const height = Math.round(entry.contentRect.height);
+      if (!width || !height || (width === previousWidth && height === previousHeight)) return;
+      previousWidth = width;
+      previousHeight = height;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => chart.resize({ width, height }));
+    });
+    observer.observe(container);
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(frame);
       chart.dispose();
     };
   }, [data]);

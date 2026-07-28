@@ -41,15 +41,35 @@ export function ChartPreview({ rows, spec }: ChartPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const chart = echarts.init(containerRef.current, undefined, { renderer: "canvas" });
+    const container = containerRef.current;
+    if (!container) return;
+    const chart = echarts.init(container, undefined, { renderer: "canvas" });
     chart.setOption(toEChartsOption(spec, rows), true);
 
-    const observer = new ResizeObserver(() => chart.resize());
-    observer.observe(containerRef.current);
+    let frame = 0;
+    let previousWidth = Math.round(container.clientWidth);
+    let previousHeight = Math.round(container.clientHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      const height = Math.round(entry.contentRect.height);
+      if (
+        width === 0 ||
+        height === 0 ||
+        (width === previousWidth && height === previousHeight)
+      ) {
+        return;
+      }
+
+      previousWidth = width;
+      previousHeight = height;
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => chart.resize({ width, height }));
+    });
+    observer.observe(container);
 
     return () => {
       observer.disconnect();
+      window.cancelAnimationFrame(frame);
       chart.dispose();
     };
   }, [rows, spec]);
