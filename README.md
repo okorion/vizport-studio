@@ -23,6 +23,9 @@
   <img src="./public/og.png" alt="데이터가 그래프와 코드로 변환되는 VizPort Studio 개념 이미지" width="100%" />
 </p>
 
+> [!NOTE]
+> 이 저장소는 규칙 기반 추천과 내보내기 흐름을 검증하는 실험형 Studio 사이드 프로젝트입니다. 핵심 흐름은 AI 없이 동작하며, WebLLM은 사용자가 선택하는 추천 보정 경로입니다. 차트 미리보기는 현재 Canvas를 사용하고 WebGPU 차트 렌더러는 확장 경계만 정의되어 있습니다.
+
 ## 제품 한눈에 보기
 
 <p align="center">
