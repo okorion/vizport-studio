@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useStudioStore } from "@/src/features/studio/studio.store";
+import {
+  MAX_FILE_SIZE_MB,
+  useStudioStore,
+} from "@/src/features/studio/studio.store";
 
 describe("studio store input consistency", () => {
   beforeEach(() => {
@@ -32,5 +35,68 @@ describe("studio store input consistency", () => {
       { category: "B", value: 20 },
     ]);
     expect(state.sourceName).toBe("pasted-data.csv");
+  });
+
+  it("does not overwrite a newer text edit with a stale analysis result", async () => {
+    useStudioStore.getState().setInputText("category,value\nOLD,10");
+    const analysis = useStudioStore.getState().analyzeText();
+
+    useStudioStore.getState().setInputText("category,value\nLATEST,99");
+    await analysis;
+
+    const state = useStudioStore.getState();
+    expect(state.inputText).toBe("category,value\nLATEST,99");
+    expect(state.hasUnanalyzedChanges).toBe(true);
+    expect(state.status).toBe("idle");
+    expect(state.rows).not.toEqual([{ category: "OLD", value: 10 }]);
+  });
+
+  it("keeps the newest result when file analyses finish out of order", async () => {
+    const delayedJsonFile = (name: string, category: string, delay: number) =>
+      ({
+        name,
+        text: () =>
+          new Promise<string>((resolve) => {
+            setTimeout(
+              () => resolve(JSON.stringify([{ category, value: 10 }])),
+              delay,
+            );
+          }),
+      }) as File;
+
+    const first = useStudioStore
+      .getState()
+      .analyzeFile(delayedJsonFile("first-slow.json", "SLOW", 30));
+    const second = useStudioStore
+      .getState()
+      .analyzeFile(delayedJsonFile("second-fast.json", "LATEST", 1));
+
+    await Promise.all([first, second]);
+
+    const state = useStudioStore.getState();
+    expect(state.sourceName).toBe("second-fast.json");
+    expect(state.rows).toEqual([{ category: "LATEST", value: 10 }]);
+    expect(state.hasUnanalyzedChanges).toBe(false);
+    expect(state.status).toBe("ready");
+  });
+
+  it("rejects oversized files before reading them", async () => {
+    let readAttempted = false;
+    const oversizedFile = {
+      name: "too-large.csv",
+      size: MAX_FILE_SIZE_MB * 1024 * 1024 + 1,
+      text: async () => {
+        readAttempted = true;
+        return "category,value\nA,10";
+      },
+    } as File;
+
+    await useStudioStore.getState().analyzeFile(oversizedFile);
+
+    const state = useStudioStore.getState();
+    expect(readAttempted).toBe(false);
+    expect(state.status).toBe("error");
+    expect(state.error).toContain(`${MAX_FILE_SIZE_MB}MB 이하`);
+    expect(state.sourceName).toBe("sample-sales.csv");
   });
 });

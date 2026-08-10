@@ -16,7 +16,11 @@ const TABS: Array<{ id: OutputTab; label: string }> = [
 ];
 
 type CopyTarget = "output" | "install";
-type CopyState = { target: CopyTarget; result: "success" | "error" } | null;
+type CopyState = {
+  target: CopyTarget;
+  result: "success" | "error";
+  fingerprint: string;
+} | null;
 
 export function OutputPanel() {
   const {
@@ -25,6 +29,7 @@ export function OutputPanel() {
     profile,
     outputTab,
     hasUnanalyzedChanges,
+    dataRevision,
     setOutputTab,
   } = useStudioStore();
   const [copyState, setCopyState] = useState<CopyState>(null);
@@ -41,6 +46,7 @@ export function OutputPanel() {
   }, [outputTab, profile, rows, selectedSpec]);
 
   const activeTab = TABS.find((tab) => tab.id === outputTab) ?? TABS[0];
+  const outputFingerprint = `${dataRevision}:${outputTab}:${output}`;
 
   if (hasUnanalyzedChanges) {
     return (
@@ -70,28 +76,39 @@ export function OutputPanel() {
     );
   }
 
-  async function copyText(target: CopyTarget, value: string) {
+  async function copyText(target: CopyTarget, value: string, fingerprint: string) {
     try {
       await navigator.clipboard.writeText(value);
-      setCopyState({ target, result: "success" });
+      setCopyState({ target, result: "success", fingerprint });
       window.setTimeout(() => {
-        setCopyState((current) => (current?.target === target ? null : current));
+        setCopyState((current) =>
+          current?.target === target && current.fingerprint === fingerprint
+            ? null
+            : current,
+        );
       }, 3000);
     } catch {
-      setCopyState({ target, result: "error" });
+      setCopyState({ target, result: "error", fingerprint });
     }
   }
 
+  const installCommand = buildInstallCommand(selectedSpec);
+  const installFingerprint = `${dataRevision}:install:${installCommand}`;
+  const activeCopyState = copyState && (
+    (copyState.target === "output" && copyState.fingerprint === outputFingerprint) ||
+    (copyState.target === "install" && copyState.fingerprint === installFingerprint)
+  )
+    ? copyState
+    : null;
   const outputCopyLabel =
-    copyState?.target === "output"
-      ? copyState.result === "success"
+    activeCopyState?.target === "output"
+      ? activeCopyState.result === "success"
         ? "복사됨"
         : "복사 실패 · 다시 시도"
       : `${activeTab.label} 복사`;
-  const installCommand = buildInstallCommand(selectedSpec);
-  const feedback = copyState
-    ? copyState.result === "success"
-      ? `클립보드에 복사했어요: ${copyState.target === "install" ? "설치 명령" : activeTab.label}`
+  const feedback = activeCopyState
+    ? activeCopyState.result === "success"
+      ? `클립보드에 복사했어요: ${activeCopyState.target === "install" ? "설치 명령" : activeTab.label}`
       : "클립보드 권한을 확인한 뒤 다시 시도해 주세요."
     : null;
 
@@ -105,9 +122,9 @@ export function OutputPanel() {
         <button
           className="copy-button"
           type="button"
-          onClick={() => void copyText("output", output)}
+          onClick={() => void copyText("output", output, outputFingerprint)}
         >
-          {copyState?.target === "output" && copyState.result === "success" ? (
+          {activeCopyState?.target === "output" && activeCopyState.result === "success" ? (
             <Check size={15} aria-hidden="true" />
           ) : (
             <Copy size={15} aria-hidden="true" />
@@ -143,14 +160,16 @@ export function OutputPanel() {
           <button
             className="install-copy-button"
             type="button"
-            onClick={() => void copyText("install", installCommand)}
+            onClick={() =>
+              void copyText("install", installCommand, installFingerprint)
+            }
           >
-            {copyState?.target === "install" && copyState.result === "success" ? (
+            {activeCopyState?.target === "install" && activeCopyState.result === "success" ? (
               <Check size={13} aria-hidden="true" />
             ) : (
               <Copy size={13} aria-hidden="true" />
             )}
-            {copyState?.target === "install" && copyState.result === "success"
+            {activeCopyState?.target === "install" && activeCopyState.result === "success"
               ? "복사됨"
               : "명령 복사"}
           </button>
@@ -165,7 +184,7 @@ export function OutputPanel() {
         tabIndex={0}
       ><code>{output}</code></pre>
       <p
-        className={`copy-feedback${copyState?.result === "error" ? " is-error" : ""}`}
+        className={`copy-feedback${activeCopyState?.result === "error" ? " is-error" : ""}`}
         aria-live="polite"
       >
         {feedback ?? " "}

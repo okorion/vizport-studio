@@ -3,7 +3,10 @@
 import { useRef } from "react";
 import { ChevronDown, FileUp, Play, RotateCcw } from "lucide-react";
 import type { VisualizationIntent } from "@/src/core/viz-spec/schema";
-import { useStudioStore } from "@/src/features/studio/studio.store";
+import {
+  MAX_FILE_SIZE_MB,
+  useStudioStore,
+} from "@/src/features/studio/studio.store";
 
 const INTENTS: Array<{ value: VisualizationIntent; label: string }> = [
   { value: "auto", label: "데이터에 맞게 자동 선택" },
@@ -80,7 +83,7 @@ export function DataInputPanel() {
         aria-describedby="data-input-help"
       />
       <p id="data-input-help" className="field-help">
-        원본 데이터는 이 브라우저 안에서만 분석됩니다.
+        원본 데이터는 이 브라우저 안에서만 분석됩니다. 파일은 최대 {MAX_FILE_SIZE_MB}MB입니다.
       </p>
 
       {hasUnanalyzedChanges ? (
