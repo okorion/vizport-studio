@@ -23,6 +23,7 @@ export function DataInputPanel() {
     status,
     error,
     warnings,
+    hasUnanalyzedChanges,
     setInputText,
     setIntent,
     analyzeText,
@@ -31,7 +32,11 @@ export function DataInputPanel() {
   } = useStudioStore();
 
   return (
-    <section className="panel input-panel" aria-labelledby="data-input-title">
+    <section
+      className="panel input-panel"
+      id="data"
+      aria-labelledby="data-input-title"
+    >
       <div className="panel-heading">
         <div>
           <span className="eyebrow">STEP 1</span>
@@ -53,6 +58,7 @@ export function DataInputPanel() {
           ref={fileInputRef}
           className="sr-only"
           type="file"
+          aria-label="CSV, TSV 또는 JSON 파일 선택"
           accept=".csv,.tsv,.json,text/csv,application/json"
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -77,6 +83,12 @@ export function DataInputPanel() {
         원본 데이터는 이 브라우저 안에서만 분석됩니다.
       </p>
 
+      {hasUnanalyzedChanges ? (
+        <p className="notice notice-info" role="status">
+          입력이 바뀌었어요. 분석하면 추천·미리보기·내보내기가 새 데이터로 갱신됩니다.
+        </p>
+      ) : null}
+
       <label className="field-label" htmlFor="visualization-intent">
         보여주고 싶은 내용
       </label>
@@ -96,21 +108,27 @@ export function DataInputPanel() {
         <ChevronDown className="select-chevron" size={15} aria-hidden="true" />
       </div>
 
-      {error ? <p className="notice notice-error">{error}</p> : null}
-      {warnings.map((warning) => (
-        <p className="notice notice-warning" key={warning}>
-          {warning}
-        </p>
-      ))}
+      <div aria-live="polite">
+        {error ? <p className="notice notice-error">{error}</p> : null}
+        {warnings.map((warning) => (
+          <p className="notice notice-warning" key={warning}>
+            {warning}
+          </p>
+        ))}
+      </div>
 
       <button
         className="primary-button"
         type="button"
         onClick={() => void analyzeText()}
-        disabled={status === "analyzing"}
+        disabled={status === "analyzing" || inputText.trim().length === 0}
       >
         <Play size={16} fill="currentColor" aria-hidden="true" />
-        {status === "analyzing" ? "분석 중…" : "그래프 추천 받기"}
+        {status === "analyzing"
+          ? "분석 중…"
+          : hasUnanalyzedChanges
+            ? "변경사항 분석하기"
+            : "추천 결과 새로고침"}
       </button>
     </section>
   );

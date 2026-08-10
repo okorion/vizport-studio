@@ -27,7 +27,7 @@ function sourceForSeries(spec: VizSpec): string {
   const bins = d3Bin().thresholds(Math.min(16, Math.max(5, Math.ceil(Math.sqrt(values.length)))))(values);
   const option: echarts.EChartsOption = {
     tooltip: { trigger: "axis" },
-    grid: { left: 24, right: 24, top: 64, bottom: 28, containLabel: true },
+    grid: { left: 24, right: 24, top: 64, bottom: 28 },
     xAxis: { type: "category", data: bins.map((bin) => \`${"${bin.x0}"}–${"${bin.x1}"}\`) },
     yAxis: { type: "value", name: "Count" },
     series: [{ type: "bar", data: bins.map((bin) => bin.length), barWidth: "92%" }],
@@ -46,7 +46,7 @@ function sourceForSeries(spec: VizSpec): string {
   return `const option: echarts.EChartsOption = {
     dataset: { source: data },
     tooltip: { trigger: "${spec.chartType === "scatter" ? "item" : "axis"}" },
-    grid: { left: 24, right: 24, top: 64, bottom: 28, containLabel: true },
+    grid: { left: 24, right: 24, top: 64, bottom: 28 },
     xAxis: { type: "${axisType}" },
     yAxis: { type: "value" },
     series: [{

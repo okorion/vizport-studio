@@ -24,6 +24,7 @@ interface StudioState {
   warnings: string[];
   status: "idle" | "analyzing" | "ready" | "error";
   error: string | null;
+  hasUnanalyzedChanges: boolean;
   outputTab: OutputTab;
   aiSummary: string | null;
   setInputText(value: string): void;
@@ -51,11 +52,22 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   warnings: [],
   status: "ready",
   error: null,
+  hasUnanalyzedChanges: false,
   outputTab: "code",
   aiSummary: null,
-  setInputText: (inputText) => set({ inputText }),
+  setInputText: (inputText) =>
+    set({
+      inputText,
+      sourceName: "편집 중 · 분석 전",
+      hasUnanalyzedChanges: true,
+      warnings: [],
+      status: "idle",
+      error: null,
+      aiSummary: null,
+    }),
   setOutputTab: (outputTab) => set({ outputTab }),
   applyAiRefinement: (recommendations, aiSummary) => {
+    if (get().hasUnanalyzedChanges) return;
     const selectedRecommendationId = recommendations[0]?.id ?? null;
     set({
       recommendations,
@@ -65,7 +77,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     });
   },
   setIntent: (intent) => {
-    const next = createVisualization(get().rows, intent);
+    const state = get();
+    if (state.hasUnanalyzedChanges) {
+      set({ intent, aiSummary: null });
+      return;
+    }
+
+    const next = createVisualization(state.rows, intent);
     set({
       intent,
       ...next,
@@ -74,7 +92,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     });
   },
   selectRecommendation: (id) => {
-    const recommendation = get().recommendations.find((item) => item.id === id);
+    const state = get();
+    if (state.hasUnanalyzedChanges) return;
+    const recommendation = state.recommendations.find((item) => item.id === id);
     if (!recommendation) return;
     set({ selectedRecommendationId: id, selectedSpec: recommendation.spec });
   },
@@ -88,6 +108,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         aiSummary: null,
         selectedRecommendationId: result.recommendations[0]?.id ?? null,
         status: "ready",
+        hasUnanalyzedChanges: false,
       });
     } catch (error) {
       set({
@@ -99,14 +120,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   analyzeFile: async (file) => {
     set({ status: "analyzing", error: null });
     try {
-      const result = await analyzeFileInput(file, get().intent);
+      const [result, inputText] = await Promise.all([
+        analyzeFileInput(file, get().intent),
+        file.text(),
+      ]);
       set({
         ...result,
-        inputText: file.size < 200_000 ? await file.text() : get().inputText,
+        inputText,
         sourceName: file.name,
         aiSummary: null,
         selectedRecommendationId: result.recommendations[0]?.id ?? null,
         status: "ready",
+        hasUnanalyzedChanges: false,
       });
     } catch (error) {
       set({
@@ -127,6 +152,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       aiSummary: null,
       status: "ready",
       error: null,
+      hasUnanalyzedChanges: false,
     });
   },
   restoreProject: (project) => {
@@ -149,6 +175,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       status: "ready",
       error: null,
       aiSummary: null,
+      hasUnanalyzedChanges: false,
     });
   },
 }));

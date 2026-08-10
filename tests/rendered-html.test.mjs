@@ -31,6 +31,9 @@ test("server-renders the VizPort Studio product shell", async () => {
   assert.match(html, /<html lang="ko">/i);
   assert.match(html, /<title>VizPort Studio/);
   assert.match(html, /데이터를 넣으면/);
+  assert.match(html, /샘플로 30초 체험/);
+  assert.match(html, /href="#recommendations"/);
   assert.match(html, /React 코드/);
+  assert.doesNotMatch(html, /[A-Z]:[\\/]Users[\\/]/i);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton/);
 });
