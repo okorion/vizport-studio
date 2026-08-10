@@ -108,11 +108,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
   setIntent: (intent) => {
     invalidatePendingAnalysis();
+    const canceledFileBaseline = pendingFileBaseline;
     pendingFileBaseline = null;
     const state = get();
-    if (state.hasUnanalyzedChanges) {
+    const hasUnanalyzedChanges = canceledFileBaseline
+      ? canceledFileBaseline.hasUnanalyzedChanges
+      : state.hasUnanalyzedChanges;
+    const sourceName = canceledFileBaseline?.sourceName ?? state.sourceName;
+    if (hasUnanalyzedChanges) {
       set({
         intent,
+        sourceName,
+        hasUnanalyzedChanges: true,
         aiSummary: null,
         dataRevision: state.dataRevision + 1,
         status: "idle",
@@ -124,6 +131,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const next = createVisualization(state.rows, intent);
     set({
       intent,
+      sourceName,
+      hasUnanalyzedChanges: false,
       ...next,
       aiSummary: null,
       dataRevision: state.dataRevision + 1,

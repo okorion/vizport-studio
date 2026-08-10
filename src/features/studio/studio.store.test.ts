@@ -135,4 +135,29 @@ describe("studio store input consistency", () => {
     expect(state.status).toBe("error");
     expect(state.error).toContain(`${MAX_FILE_SIZE_MB}MB 이하`);
   });
+
+  it("restores committed data before applying an intent that cancels a file", async () => {
+    const slowValidFile = {
+      name: "valid-slow.json",
+      size: 100,
+      text: () =>
+        new Promise<string>((resolve) => {
+          setTimeout(
+            () => resolve(JSON.stringify([{ category: "SLOW", value: 10 }])),
+            30,
+          );
+        }),
+    } as File;
+
+    const staleAnalysis = useStudioStore.getState().analyzeFile(slowValidFile);
+    useStudioStore.getState().setIntent("composition");
+    await staleAnalysis;
+
+    const state = useStudioStore.getState();
+    expect(state.sourceName).toBe("sample-sales.csv");
+    expect(state.intent).toBe("composition");
+    expect(state.rows).toHaveLength(12);
+    expect(state.hasUnanalyzedChanges).toBe(false);
+    expect(state.status).toBe("ready");
+  });
 });
