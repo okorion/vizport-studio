@@ -57,6 +57,7 @@ export function AiRefinePanel() {
 
   async function runRefinement() {
     if (!model.trim() || recommendations.length === 0) return;
+    const expectedRevision = useStudioStore.getState().dataRevision;
     setStatus("loading");
     setError("");
     setProgress(mode === "webllm" ? "모델을 준비하는 중…" : "로컬 모델에 연결하는 중…");
@@ -70,8 +71,17 @@ export function AiRefinePanel() {
         intent,
         recommendations,
       );
-      applyAiRefinement(result.recommendations, result.summary);
+      const applied = applyAiRefinement(
+        result.recommendations,
+        result.summary,
+        expectedRevision,
+      );
       setProgress("");
+      if (!applied) {
+        setStatus("idle");
+        setError("데이터가 바뀌어 이전 AI 결과를 적용하지 않았어요. 다시 실행해 주세요.");
+        return;
+      }
       setStatus("done");
     } catch (reason) {
       setStatus("error");

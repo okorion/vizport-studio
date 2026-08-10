@@ -44,7 +44,7 @@ function cartesianOption(spec: VizSpec, rows: DataRow[]): EChartsOption {
 
   return {
     color: COLORS,
-    grid: { left: 18, right: 18, top: 76, bottom: 18, containLabel: true },
+    grid: { left: 18, right: 18, top: 76, bottom: 18 },
     tooltip: { trigger: "axis", confine: true },
     xAxis: {
       type: "category",
@@ -84,7 +84,7 @@ function scatterOption(spec: VizSpec, rows: DataRow[]): EChartsOption {
 
   return {
     color: COLORS,
-    grid: { left: 18, right: 18, top: 76, bottom: 18, containLabel: true },
+    grid: { left: 18, right: 18, top: 76, bottom: 18 },
     tooltip: {
       trigger: "item",
       formatter: (params: unknown) => {
@@ -154,7 +154,7 @@ function histogramOption(spec: VizSpec, rows: DataRow[]): EChartsOption {
 
   return {
     color: COLORS,
-    grid: { left: 18, right: 18, top: 76, bottom: 18, containLabel: true },
+    grid: { left: 18, right: 18, top: 76, bottom: 18 },
     tooltip: { trigger: "axis", confine: true },
     xAxis: {
       type: "category",

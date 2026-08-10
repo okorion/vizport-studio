@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, ChevronRight, GitBranch, Sparkles } from "lucide-react";
+import { ArrowDownRight, BarChart3, ChevronRight, GitBranch, Sparkles } from "lucide-react";
 import { DataInputPanel } from "@/src/features/studio/import/DataInputPanel";
 import { RecommendationPanel } from "@/src/features/studio/recommendations/RecommendationPanel";
 import { PreviewPanel } from "@/src/features/studio/preview/PreviewPanel";
@@ -20,10 +20,10 @@ export function StudioPage() {
         </a>
 
         <nav className="flow-nav" aria-label="작업 단계">
-          <span className="is-current">데이터</span><ChevronRight size={13} />
-          <span>추천</span><ChevronRight size={13} />
-          <span>미리보기</span><ChevronRight size={13} />
-          <span>내보내기</span>
+          <a href="#data"><span>1</span> 데이터</a><ChevronRight size={13} />
+          <a href="#recommendations"><span>2</span> 추천</a><ChevronRight size={13} />
+          <a href="#preview"><span>3</span> 미리보기</a><ChevronRight size={13} />
+          <a href="#export"><span>4</span> 내보내기</a>
         </nav>
 
         <div className="topbar-actions">
@@ -51,6 +51,24 @@ export function StudioPage() {
           React 코드, LLM 프롬프트 또는 명세로 가져가세요.
         </p>
       </div>
+
+      <section className="quick-start" aria-labelledby="quick-start-title">
+        <div className="quick-start-intro">
+          <span>처음이라면</span>
+          <div>
+            <strong id="quick-start-title">샘플로 30초 체험</strong>
+            <p>샘플은 이미 분석되어 있어요. 내 데이터는 STEP 1에 넣고 변경사항을 분석하세요.</p>
+          </div>
+        </div>
+        <ol>
+          <li><span>1</span>추천 그래프 선택</li>
+          <li><span>2</span>미리보기 확인</li>
+          <li><span>3</span>React 코드 복사</li>
+        </ol>
+        <a className="quick-start-link" href="#recommendations">
+          샘플 추천 보기 <ArrowDownRight size={15} aria-hidden="true" />
+        </a>
+      </section>
 
       <div className="studio-layout">
         <aside className="studio-sidebar">

@@ -13,18 +13,31 @@ const ChartPreview = dynamic(
 );
 
 export function PreviewPanel() {
-  const { rows, selectedSpec, profile } = useStudioStore();
+  const { rows, selectedSpec, profile, hasUnanalyzedChanges } = useStudioStore();
+
+  if (hasUnanalyzedChanges) {
+    return (
+      <section className="workspace-empty workspace-pending" id="preview" aria-labelledby="preview-pending-title">
+        <span className="eyebrow">STEP 3</span>
+        <h2 id="preview-pending-title">미리보기 대기 중</h2>
+        <p>STEP 1에서 변경사항을 분석하면 새 데이터의 그래프가 여기에 나타납니다.</p>
+        <a href="#data">변경사항 분석하러 가기</a>
+      </section>
+    );
+  }
 
   if (!selectedSpec) {
     return (
-      <section className="workspace-empty">
+      <section className="workspace-empty" id="preview" aria-labelledby="preview-empty-title">
+        <span className="eyebrow">STEP 3</span>
+        <h2 id="preview-empty-title">미리보기 준비 중</h2>
         <p>추천 가능한 그래프가 없어요. 수치 필드가 포함된 데이터를 넣어 주세요.</p>
       </section>
     );
   }
 
   return (
-    <section className="preview-panel" aria-labelledby="preview-title">
+    <section className="preview-panel" id="preview" aria-labelledby="preview-title">
       <div className="workspace-heading">
         <div>
           <span className="eyebrow">STEP 3</span>
@@ -47,7 +60,12 @@ export function PreviewPanel() {
         <ChartPreview rows={rows} spec={selectedSpec} />
       </div>
 
-      <div className="data-preview" aria-label="데이터 미리보기">
+      <div
+        className="data-preview"
+        role="region"
+        aria-label="데이터 미리보기"
+        tabIndex={0}
+      >
         <table>
           <thead>
             <tr>
