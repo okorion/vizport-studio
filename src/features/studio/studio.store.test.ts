@@ -99,4 +99,40 @@ describe("studio store input consistency", () => {
     expect(state.error).toContain(`${MAX_FILE_SIZE_MB}MB 이하`);
     expect(state.sourceName).toBe("sample-sales.csv");
   });
+
+  it("restores the last committed state when the latest file fails", async () => {
+    const slowValidFile = {
+      name: "valid-slow.json",
+      size: 100,
+      text: () =>
+        new Promise<string>((resolve) => {
+          setTimeout(
+            () => resolve(JSON.stringify([{ category: "SLOW", value: 10 }])),
+            30,
+          );
+        }),
+    } as File;
+    const oversizedFile = {
+      name: "latest-too-large.csv",
+      size: MAX_FILE_SIZE_MB * 1024 * 1024 + 1,
+      text: async () => "category,value\nLATEST,99",
+    } as File;
+
+    const staleAnalysis = useStudioStore.getState().analyzeFile(slowValidFile);
+    await useStudioStore.getState().analyzeFile(oversizedFile);
+    await staleAnalysis;
+
+    const state = useStudioStore.getState();
+    expect(state.sourceName).toBe("sample-sales.csv");
+    expect(state.inputText).toBeDefined();
+    expect(state.rows).toHaveLength(12);
+    expect(state.rows[0]).toMatchObject({
+      month: "2025-01-01",
+      product: "Atlas",
+      revenue: 124000,
+    });
+    expect(state.hasUnanalyzedChanges).toBe(false);
+    expect(state.status).toBe("error");
+    expect(state.error).toContain(`${MAX_FILE_SIZE_MB}MB 이하`);
+  });
 });

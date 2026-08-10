@@ -47,6 +47,10 @@ interface StudioState {
 
 const initial = createVisualization(SAMPLE_ROWS, "auto");
 let latestAnalysisRequest = 0;
+let pendingFileBaseline: {
+  sourceName: string;
+  hasUnanalyzedChanges: boolean;
+} | null = null;
 
 function invalidatePendingAnalysis() {
   latestAnalysisRequest += 1;
@@ -75,6 +79,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   aiSummary: null,
   setInputText: (inputText) => {
     invalidatePendingAnalysis();
+    pendingFileBaseline = null;
     set((state) => ({
       inputText,
       sourceName: "편집 중 · 분석 전",
@@ -103,6 +108,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
   setIntent: (intent) => {
     invalidatePendingAnalysis();
+    pendingFileBaseline = null;
     const state = get();
     if (state.hasUnanalyzedChanges) {
       set({
@@ -134,6 +140,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set({ selectedRecommendationId: id, selectedSpec: recommendation.spec });
   },
   analyzeText: async () => {
+    pendingFileBaseline = null;
     const requestId = beginAnalysis();
     const { inputText, intent } = get();
     set((state) => ({
@@ -163,10 +170,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   analyzeFile: async (file) => {
     const requestId = beginAnalysis();
     const stateBeforeAnalysis = get();
+    const baseline = pendingFileBaseline ?? {
+      sourceName: stateBeforeAnalysis.sourceName,
+      hasUnanalyzedChanges: stateBeforeAnalysis.hasUnanalyzedChanges,
+    };
+    pendingFileBaseline = baseline;
     if (file.size > MAX_FILE_BYTES) {
+      pendingFileBaseline = null;
       set({
         status: "error",
         error: `파일은 ${MAX_FILE_SIZE_MB}MB 이하로 선택해 주세요.`,
+        sourceName: baseline.sourceName,
+        hasUnanalyzedChanges: baseline.hasUnanalyzedChanges,
       });
       return;
     }
@@ -184,6 +199,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         file.text(),
       ]);
       if (requestId !== latestAnalysisRequest) return;
+      pendingFileBaseline = null;
       set({
         ...result,
         inputText,
@@ -195,16 +211,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       });
     } catch (error) {
       if (requestId !== latestAnalysisRequest) return;
+      pendingFileBaseline = null;
       set({
         status: "error",
         error: error instanceof Error ? error.message : "파일을 분석하지 못했어요.",
-        sourceName: stateBeforeAnalysis.sourceName,
-        hasUnanalyzedChanges: stateBeforeAnalysis.hasUnanalyzedChanges,
+        sourceName: baseline.sourceName,
+        hasUnanalyzedChanges: baseline.hasUnanalyzedChanges,
       });
     }
   },
   restoreSample: () => {
     invalidatePendingAnalysis();
+    pendingFileBaseline = null;
     const state = get();
     const result = createVisualization(SAMPLE_ROWS, state.intent);
     set({
@@ -223,6 +241,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
   restoreProject: (project) => {
     invalidatePendingAnalysis();
+    pendingFileBaseline = null;
     const dataRevision = get().dataRevision + 1;
     const result = createVisualization(project.rows, project.intent);
     const selected = project.selectedSpec
